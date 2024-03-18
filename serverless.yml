@@ -1,0 +1,16 @@
+org: andrelmmiranda
+app: teste-express
+service: aws-node-express-api-project
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+functions:
+  - ${file(./functions/sectorFunctions.yml)}
+
+
+plugins:
+  - serverless-offline
+  

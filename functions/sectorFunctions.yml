@@ -1,0 +1,34 @@
+getAllSectors:
+    handler: index.handler
+    events:
+      - httpApi:
+          path: /api/v1/sector
+          method: GET
+
+getSectorById:
+  handler: index.handler
+  events:
+    - httpApi:
+        path: /api/v1/sector/{id}
+        method: GET
+
+createSector:
+  handler: index.handler
+  events:
+    - httpApi:
+        path: /api/v1/sector
+        method: POST
+        
+updateSector:
+  handler: index.handler
+  events:
+    - httpApi:
+        path: /api/v1/sector/{id}
+        method: PUT
+
+deleteSector:
+  handler: index.handler
+  events:
+    - httpApi:
+        path: /api/v1/sector/{id}
+        method: DELETE

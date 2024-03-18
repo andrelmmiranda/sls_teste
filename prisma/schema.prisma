@@ -1,0 +1,234 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Cargo {
+  id           Int            @id @default(autoincrement())
+  nome         String         @db.VarChar(50)
+  descricao    String?        @db.Text
+  created_at   DateTime       @default(now())
+  update_at    DateTime?      @updatedAt
+  deleted_at   DateTime?
+  CargoUsuario CargoUsuario[]
+
+  @@map("cargo")
+}
+
+model Setor {
+  id           Int            @id @default(autoincrement())
+  nome         String         @db.VarChar(50)
+  descricao    String?        @db.Text
+  created_at   DateTime       @default(now())
+  update_at    DateTime?      @updatedAt
+  deleted_at   DateTime?
+  SetorUsuario SetorUsuario[]
+
+  @@map("setor")
+}
+
+model Usuario {
+  id                 Int                  @id @default(autoincrement())
+  nome               String               @db.VarChar(100)
+  created_at         DateTime             @default(now())
+  update_at          DateTime?            @updatedAt
+  deleted_at         DateTime?
+  CargoUsuario       CargoUsuario[]
+  SetorUsuario       SetorUsuario[]
+  EntidadeUsuario    EntidadeUsuario[]
+  Endereco           Endereco[]
+  AgendamentoUsuario AgendamentoUsuario[]
+  ProgramaUsuario    ProgramaUsuario[]
+
+  @@map("usuario")
+}
+
+model CargoUsuario {
+  cargo_id   Int     @db.Integer
+  usuario_id Int     @db.Integer
+  cargo      Cargo   @relation(fields: [cargo_id], references: [id])
+  usuario    Usuario @relation(fields: [usuario_id], references: [id])
+
+  @@id([cargo_id, usuario_id])
+  @@map("cargo_usuario")
+}
+
+model SetorUsuario {
+  setor_id   Int     @db.Integer
+  usuario_id Int     @db.Integer
+  setor      Setor   @relation(fields: [setor_id], references: [id])
+  usuario    Usuario @relation(fields: [usuario_id], references: [id])
+
+  @@id([setor_id, usuario_id])
+  @@map("setor_usuario")
+}
+
+model TipoEntidade {
+  id         Int        @id @default(autoincrement())
+  tipo       String     @db.VarChar(7)
+  created_at DateTime   @default(now())
+  update_at  DateTime?  @updatedAt
+  deleted_at DateTime?
+  Entidade   Entidade[]
+
+  @@map("tipo_entidade")
+}
+
+model Entidade {
+  id               Int                @id @default(autoincrement())
+  nome             String             @db.VarChar(100)
+  logo             String?            @db.Text
+  cor              String?            @db.Char(7)
+  cnpj             String?            @db.VarChar(14)
+  cpf              String?            @db.VarChar(11)
+  intermediaria    Boolean?           @default(false) @db.Boolean
+  tipo_entidade_id Int                @db.Integer
+  tipo_entidade    TipoEntidade       @relation(fields: [tipo_entidade_id], references: [id])
+  entidade_id      Int?
+  matriz           Entidade?          @relation("entidade", fields: [entidade_id], references: [id])
+  filial           Entidade[]         @relation("entidade")
+  created_at       DateTime           @default(now())
+  update_at        DateTime?          @updatedAt
+  deleted_at       DateTime?
+  EntidadeUsuario  EntidadeUsuario[]
+  Faturamento      Faturamento[]
+  Endereco         Endereco[]
+  EntidadePrograma EntidadePrograma[]
+
+  @@map("entidade")
+}
+
+model EntidadeUsuario {
+  entidade_id Int      @db.Integer
+  usuario_id  Int      @db.Integer
+  entidade    Entidade @relation(fields: [entidade_id], references: [id])
+  usuario     Usuario  @relation(fields: [usuario_id], references: [id])
+
+  @@id([entidade_id, usuario_id])
+  @@map("entidade_usuario")
+}
+
+model Faturamento {
+  id          Int       @id @default(autoincrement())
+  tipo        String?   @default("POR VIDA ATIVA") @db.VarChar(35)
+  minimo      Int?      @db.Integer
+  entidade_id Int       @unique
+  entidade    Entidade? @relation(fields: [entidade_id], references: [id])
+  created_at  DateTime  @default(now())
+  update_at   DateTime? @updatedAt
+  deleted_at  DateTime?
+
+  @@map("faturamento")
+}
+
+model Endereco {
+  id          Int       @id @default(autoincrement())
+  cep         String    @db.Char(8)
+  logradouro  String?   @db.VarChar(100)
+  complemento String?   @db.VarChar(100)
+  bairro      String?   @db.VarChar(50)
+  localidade  String?   @db.VarChar(50)
+  uf          String?   @db.Char(2)
+  usuario_id  Int?
+  entidade_id Int?
+  usuario     Usuario?  @relation(fields: [usuario_id], references: [id])
+  entidade    Entidade? @relation(fields: [entidade_id], references: [id])
+  created_at  DateTime  @default(now())
+  update_at   DateTime? @updatedAt
+  deleted_at  DateTime?
+
+  @@map("endereco")
+}
+
+model Programa {
+  id                Int                 @id @default(autoincrement())
+  titulo            String              @db.VarChar(50)
+  descricao         String?             @db.Text
+  status            Boolean             @default(true) @db.Boolean
+  created_at        DateTime            @default(now())
+  update_at         DateTime?           @updatedAt
+  deleted_at        DateTime?
+  EntidadePrograma  EntidadePrograma[]
+  Agendamento       Agendamento[]
+  ProgramaUsuario   ProgramaUsuario[]
+  AvaliacaoPrograma AvaliacaoPrograma[]
+
+  @@map("programa")
+}
+
+model EntidadePrograma {
+  entidade_id Int
+  programa_id Int
+  entidade    Entidade @relation(fields: [entidade_id], references: [id])
+  programa    Programa @relation(fields: [programa_id], references: [id])
+
+  @@id([entidade_id, programa_id])
+  @@map("entidade_programa")
+}
+
+model Agendamento {
+  id                 Int                  @id @default(autoincrement())
+  data               DateTime             @db.Timestamp()
+  tipo               String               @default("ÚNICO") @db.VarChar(25)
+  status             Boolean              @default(true) @db.Boolean
+  programa_id        Int
+  programa           Programa             @relation(fields: [programa_id], references: [id])
+  created_at         DateTime             @default(now())
+  update_at          DateTime?            @updatedAt
+  deleted_at         DateTime?
+  AgendamentoUsuario AgendamentoUsuario[]
+
+  @@map("agendamento")
+}
+
+model AgendamentoUsuario {
+  agendamento_id Int
+  usuario_id     Int
+  agendamento    Agendamento @relation(fields: [agendamento_id], references: [id])
+  usuario        Usuario     @relation(fields: [usuario_id], references: [id])
+
+  @@id([agendamento_id, usuario_id])
+  @@map("agendamento_usuario")
+}
+
+model ProgramaUsuario {
+  programa_id Int
+  usuario_id  Int
+  programa    Programa @relation(fields: [programa_id], references: [id])
+  usuario     Usuario  @relation(fields: [usuario_id], references: [id])
+
+  @@id([programa_id, usuario_id])
+  @@map("programa_usuario")
+}
+
+model Avaliacao {
+  id                Int                 @id @default(autoincrement())
+  titulo            String              @db.VarChar(50)
+  descricao         String?             @db.Text
+  created_at        DateTime            @default(now())
+  update_at         DateTime?           @updatedAt
+  deleted_at        DateTime?
+  AvaliacaoPrograma AvaliacaoPrograma[]
+
+  @@map("avaliacao")
+}
+
+model AvaliacaoPrograma {
+  avaliacao_id Int
+  programa_id  Int
+  avaliacao    Avaliacao @relation(fields: [avaliacao_id], references: [id])
+  programa     Programa  @relation(fields: [programa_id], references: [id])
+
+  @@id([avaliacao_id, programa_id])
+  @@map("avaliacao_programa")
+}
